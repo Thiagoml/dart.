@@ -1,0 +1,311 @@
+import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
+
+
+// Modelo
+
+class User {
+
+  final int id;
+
+  String name;
+
+  String cpf;
+  
+  User({required this.id, required this.name, required this.cpf});
+
+}
+
+
+// DAO
+
+class UserDAO extends ChangeNotifier {
+
+  List<User> _users = [];
+
+  int _nextId = 1;
+
+
+  List<User> get users => _users;
+
+
+  void createUser(String name, String cpf) {
+
+    _users.add(User(id: _nextId++, name: name, cpf: cpf));
+
+    notifyListeners();
+
+  }
+
+
+  void updateUser(int id, String newName, String newCpf) {
+
+    User? user = _users.firstWhere((user) => user.id == id);
+
+    if (user != null) {
+
+      user.name = newName;
+      user.cpf = newCpf;
+      notifyListeners();
+
+    }
+
+  }
+
+
+  void deleteUser(int id) {
+
+    _users.removeWhere((user) => user.id == id);
+
+    notifyListeners();
+
+  }
+
+}
+
+
+// View
+
+class UserListView extends StatelessWidget {
+
+  @override
+
+  Widget build(BuildContext context) {
+
+    final userDAO = Provider.of<UserDAO>(context);
+
+
+    return Scaffold(
+
+      appBar: AppBar(title: Text("User Management")),
+
+      body: ListView.builder(
+
+        itemCount: userDAO.users.length,
+
+        itemBuilder: (context, index) {
+
+          final user = userDAO.users[index];
+
+          return ListTile(
+
+            title: Text(user.name),
+
+            trailing: Row(
+
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+
+                IconButton(
+
+                  icon: Icon(Icons.edit),
+
+                  onPressed: () {
+
+                    _showEditDialog(context, user);
+
+                  },
+
+                ),
+
+                IconButton(
+
+                  icon: Icon(Icons.delete),
+
+                  onPressed: () {
+
+                    userDAO.deleteUser(user.id);
+
+                  },
+
+                ),
+
+              ],
+
+            ),
+
+          );
+
+        },
+
+      ),
+
+      floatingActionButton: FloatingActionButton(
+
+        onPressed: () {
+
+          _showAddDialog(context);
+
+        },
+
+        child: Icon(Icons.add),
+
+      ),
+
+    );
+
+  }
+
+
+  void _showAddDialog(BuildContext context) {
+
+    String name = '';
+    String cpf = '';
+    
+    showDialog(
+
+      context: context,
+
+      builder: (context) {
+
+        return AlertDialog(
+
+          title: Text("Add User"),
+
+          content: TextField(
+
+            onChanged: (value) {
+
+              name = value;
+
+            },
+            
+            decoration: InputDecoration(labelText: "User Name"),
+            
+            onChanged: (value) {
+        
+              cpf = value;
+              
+
+            },
+
+            decoration: InputDecoration(labelText: "User CPF"),
+            
+          ),
+     
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                if (name.isNotEmpty) {
+
+                  Provider.of<UserDAO>(context, listen: false).createUser(name, cpf);
+                  Navigator.of(context).pop();
+
+                }
+
+              },
+
+              child: Text("Add"),
+
+            ),
+
+          ],
+
+        );
+
+      },
+
+    );
+
+  }
+
+
+  void _showEditDialog(BuildContext context, User user) {
+
+    String newName = user.name;
+
+    showDialog(
+
+      context: context,
+
+      builder: (context) {
+
+        return AlertDialog(
+
+          title: Text("Edit User"),
+
+          content: TextField(
+
+            onChanged: (value) {
+
+              newName = value;
+
+            },
+
+            controller: TextEditingController(text: user.name),
+
+            decoration: InputDecoration(labelText: "User Name"),
+
+          ),
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                if (newName.isNotEmpty) {
+
+                  Provider.of<UserDAO>(context, listen: false).updateUser(user.id, newName);
+
+                  Navigator.of(context).pop();
+
+                }
+
+              },
+
+              child: Text("Update"),
+
+            ),
+
+          ],
+
+        );
+
+      },
+
+    );
+
+  }
+
+}
+
+
+// Main
+
+void main() {
+
+  runApp(MyApp());
+
+}
+
+
+class MyApp extends StatelessWidget {
+
+  @override
+
+  Widget build(BuildContext context) {
+
+    return ChangeNotifierProvider(
+
+      create: (_) => UserDAO(),
+
+      child: MaterialApp(
+
+        title: 'MVC Flutter CRUD App',
+
+        home: UserListView(),
+
+      ),
+
+    );
+
+  }
+
+}
+
