@@ -91,6 +91,7 @@ class UserListView extends StatelessWidget {
           return ListTile(
 
             title: Text(user.name),
+            subtitle: Text(user.cpf),
 
             trailing: Row(
 
@@ -164,27 +165,39 @@ class UserListView extends StatelessWidget {
 
           title: Text("Add User"),
 
-          content: TextField(
+          content: Column(
 
-            onChanged: (value) {
+            mainAxisSize: MainAxisSize.min,
 
-              name = value;
+            children: [
 
-            },
-            
-            decoration: InputDecoration(labelText: "User Name"),
-            
-            onChanged: (value) {
-        
-              cpf = value;
-              
+              TextField(
 
-            },
+                onChanged: (value) {
 
-            decoration: InputDecoration(labelText: "User CPF"),
-            
+                  name = value;
+
+                },
+
+                decoration: InputDecoration(labelText: "User Name"),
+
+              ),
+
+              TextField(
+
+                onChanged: (value) {
+
+                  cpf = value;
+
+                },
+
+                decoration: InputDecoration(labelText: "User CPF"),
+
+              ),
+
+            ],
+
           ),
-     
           actions: [
 
             TextButton(
@@ -217,7 +230,8 @@ class UserListView extends StatelessWidget {
 
   void _showEditDialog(BuildContext context, User user) {
 
-    String newName = user.name;
+   String newName = user.name;
+   String newCpf = user.cpf;
 
     showDialog(
 
@@ -229,20 +243,43 @@ class UserListView extends StatelessWidget {
 
           title: Text("Edit User"),
 
-          content: TextField(
+         content: Column(
 
-            onChanged: (value) {
+            mainAxisSize: MainAxisSize.min,
 
-              newName = value;
+            children: [
 
-            },
+              TextField(
 
-            controller: TextEditingController(text: user.name),
+                onChanged: (value) {
 
-            decoration: InputDecoration(labelText: "User Name"),
+                  newName = value;
+
+                },
+
+                controller: TextEditingController(text: user.name),
+
+                decoration: InputDecoration(labelText: "User Name"),
+
+              ),
+
+              TextField(
+
+                onChanged: (value) {
+
+                  newCpf = value;
+
+                },
+
+                controller: TextEditingController(text: user.cpf),
+
+                decoration: InputDecoration(labelText: "User CPF"),
+
+              ),
+
+            ],
 
           ),
-
           actions: [
 
             TextButton(
@@ -251,7 +288,7 @@ class UserListView extends StatelessWidget {
 
                 if (newName.isNotEmpty) {
 
-                  Provider.of<UserDAO>(context, listen: false).updateUser(user.id, newName);
+                  Provider.of<UserDAO>(context, listen: false).updateUser(user.id, newName, newCpf);
 
                   Navigator.of(context).pop();
 
