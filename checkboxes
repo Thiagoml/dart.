@@ -1,393 +1,153 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(MyApp());
+// Modelo para representar o item do cardápio
+class MenuItem {
+  final String name;
+  bool isSelected;
+
+  MenuItem({required this.name, this.isSelected = false});
+}
+
+// DAO para controlar o estado dos itens do cardápio
+class MenuDAO extends ChangeNotifier {
+  List<MenuItem> _menuItems = [
+    MenuItem(name: 'Arroz e Feijão'),
+    MenuItem(name: 'Frango Grelhado'),
+    MenuItem(name: 'Bife de Carne'),
+    MenuItem(name: 'Salada'),
+    MenuItem(name: 'Sopa'),
+    MenuItem(name: 'Macarrão à Bolonhesa'),
+    MenuItem(name: 'Peixe Assado'),
+    MenuItem(name: 'Hambúrguer'),
+    MenuItem(name: 'Pizza'),
+  ];
+
+  List<MenuItem> get menuItems => _menuItems;
+
+  void toggleSelection(int index) {
+    _menuItems[index].isSelected = !_menuItems[index].isSelected;
+    notifyListeners();
+  }
+}
+
+// View para exibir o cardápio
+class MenuListView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final menuDAO = Provider.of<MenuDAO>(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Cardápio',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        backgroundColor: Colors.orangeAccent,
+      ),
+      body: Stack(
+        children: [
+          // Corpo do cardápio com padding para iniciar abaixo do ícone
+          Padding(
+            padding: const EdgeInsets.only(top: 130), // Ajuste para começar abaixo do ícone
+            child: ListView.builder(
+              itemCount: menuDAO.menuItems.length,
+              itemBuilder: (context, index) {
+                final menuItem = menuDAO.menuItems[index];
+                return Column(
+                  children: [
+                    CheckboxListTile(
+                      title: Text(menuItem.name, style: TextStyle(fontSize: 18)),
+                      value: menuItem.isSelected,
+                      onChanged: (bool? value) {
+                        menuDAO.toggleSelection(index);
+                      },
+                      activeColor: Colors.orangeAccent,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    Divider(), // Separação entre os itens
+                  ],
+                );
+              },
+            ),
+          ),
+
+          // Ícone fora da faixa amarela (fora do AppBar)
+          Positioned(
+            top: 30, // Posiciona o ícone abaixo da faixa amarela
+            left: MediaQuery.of(context).size.width / 2 - 50, // Centraliza o ícone horizontalmente
+            child: Image.network(
+              'https://cdn-icons-png.freepik.com/256/7064/7064359.png?semt=ais_hybrid',
+              height: 100, // Tamanho do ícone
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showSelectedItemsDialog(context, menuDAO);
+        },
+        child: Icon(Icons.check),
+        backgroundColor: Colors.orangeAccent,
+      ),
+    );
+  }
+
+  void _showSelectedItemsDialog(BuildContext context, MenuDAO menuDAO) {
+    List<String> selectedItems = menuDAO.menuItems
+        .where((item) => item.isSelected)
+        .map((item) => item.name)
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Itens Selecionados", style: TextStyle(fontSize: 20)),
+          content: selectedItems.isEmpty
+              ? Text("Nenhum item selecionado.", style: TextStyle(fontSize: 16))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: selectedItems
+                      .map((item) => Text(item, style: TextStyle(fontSize: 16)))
+                      .toList(),
+                ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                "Fechar",
+                style: TextStyle(color: Colors.orangeAccent, fontSize: 16),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: CheckboxSample(),
-    );
-  }
-}
-
-class CheckboxSample extends StatefulWidget {
-  @override
-  CheckboxSampleState createState() => CheckboxSampleState();
-}
-
-class CheckboxSampleState extends State<CheckboxSample> {
-  Map<String, bool> checked = {
-    'Desenv. Sistemas': false,
-    'Automação': false,
-    'Administração': false,
-  };
-
-  Map<String, bool> periodo = {
-    'Diurno': false,
-    'Matutino': false,
-    'Noturno': false,
-  };
-
-  Map<String, bool> local = {
-    'Sede': false,
-    'Macedo': false,
-    'João Cursino': false,
-  };
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Checkbox Sample'),
+    return ChangeNotifierProvider(
+      create: (_) => MenuDAO(),
+      child: MaterialApp(
+        title: 'Cardápio com Checkboxes',
+        theme: ThemeData(
+          primarySwatch: Colors.orange,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        body: Padding(
-            padding: const EdgeInsets.all(2.0),
-            child:
-                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildCheckboxes(),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildPeriodo(),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildLocal(),
-                ),
-              ),
-            ])));
-  }
-
-  List<Widget> _buildCheckboxes() {
-    List<Widget> checkboxes = [];
-
-    // percorre todos os itens armazendos na estrutura
-
-    // Map (chave, valor), obtendo os valores
-
-    checked.forEach((String key, bool value) {
-      checkboxes.add(
-        // adiciona um item ao checkbox
-
-        CheckboxListTile(
-          title: Text(key), //adiciona título
-
-          value: value, // define valor
-
-          // implementa evento onChage para gerenciar
-
-          // valor do checkbox
-
-          onChanged: (newValue) {
-            //recebe valor atual
-
-            setState(() {
-              //altera o estado da variável
-
-              newValue != null
-                  ? //se diferente de null
-
-                  //alterna valor entre verdadeiro e falso
-
-                  checked[key] == true
-                      ? checked[key] = false
-                      : checked[key] = true
-                  : checked[key] = false;
-            });
-          },
-        ),
-      );
-    });
-
-    // adiciona ao final do checkBox, botão
-
-    checkboxes.add(
-      ElevatedButton(
-        // se pressionado executar método
-
-        onPressed: () {
-          _showSelected(); // mostra selecionados
-        },
-
-        child: const Text('Show Selected'),
+        home: MenuListView(),
       ),
-    );
-
-    return checkboxes;
-  }
-
-  List<Widget> _buildPeriodo() {
-    List<Widget> checkboxes = [];
-
-    // percorre todos os itens armazendos na estrutura
-
-    // Map (chave, valor), obtendo os valores
-
-    periodo.forEach((String key, bool value) {
-      checkboxes.add(
-        // adiciona um item ao checkbox
-
-        CheckboxListTile(
-          title: Text(key), //adiciona título
-
-          value: value, // define valor
-
-          // implementa evento onChage para gerenciar
-
-          // valor do checkbox
-
-          onChanged: (newValue) {
-            //recebe valor atual
-
-            setState(() {
-              //altera o estado da variável
-
-              newValue != null
-                  ? //se diferente de null
-
-                  //alterna valor entre verdadeiro e falso
-
-                  periodo[key] == true
-                      ? periodo[key] = false
-                      : periodo[key] = true
-                  : periodo[key] = false;
-            });
-          },
-        ),
-      );
-    });
-
-    // adiciona ao final do checkBox, botão
-
-    checkboxes.add(
-      ElevatedButton(
-        // se pressionado executar método
-
-        onPressed: () {
-          _showSelectedPerido(); // mostra selecionados
-        },
-
-        child: const Text('Show Selected'),
-      ),
-    );
-
-    return checkboxes;
-  }
-
-  List<Widget> _buildLocal() {
-    List<Widget> checkboxes = [];
-
-    // percorre todos os itens armazendos na estrutura
-
-    // Map (chave, valor), obtendo os valores
-
-    local.forEach((String key, bool value) {
-      checkboxes.add(
-        // adiciona um item ao checkbox
-
-        CheckboxListTile(
-          title: Text(key), //adiciona título
-
-          value: value, // define valor
-
-          // implementa evento onChage para gerenciar
-
-          // valor do checkbox
-
-          onChanged: (newValue) {
-            //recebe valor atual
-
-            setState(() {
-              //altera o estado da variável
-
-              newValue != null
-                  ? //se diferente de null
-
-                  //alterna valor entre verdadeiro e falso
-
-                  local[key] == true
-                      ? local[key] = false
-                      : local[key] = true
-                  : local[key] = false;
-            });
-          },
-        ),
-      );
-    });
-
-    // adiciona ao final do checkBox, botão
-
-    checkboxes.add(
-      ElevatedButton(
-        // se pressionado executar método
-
-        onPressed: () {
-          _showSelectedLocal(); // mostra selecionados
-        },
-
-        child: const Text('Show Selected'),
-      ),
-    );
-
-    return checkboxes;
-  }
-
-  void _showSelected() {
-    // mostra itens selecionados
-
-    List<String> selected = []; // lista de strings
-
-    // percorre coleção que contém o itens selecionados
-
-    checked.forEach((String key, bool value) {
-      if (value) {
-        // se valor válido
-
-        selected.add(key); // adiciona na lista de strings
-      }
-    });
-
-    // mostra caixa de diálogo com as opções selecionadas
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          // título da lista
-
-          title: const Text('Selected Items'),
-
-          // conteúdo da lista
-
-          //* a cada elemento adicina uma vírgula
-
-          content: Text(selected.join(', ')),
-
-          actions: [
-            // cria botão na caixa de diálogo
-
-            TextButton(
-              onPressed: () {
-                //fecha caixa de diálogo
-
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSelectedPerido() {
-    // mostra itens selecionados
-
-    List<String> selected = []; // lista de strings
-
-    // percorre coleção que contém o itens selecionados
-
-    periodo.forEach((String key, bool value) {
-      if (value) {
-        // se valor válido
-
-        selected.add(key); // adiciona na lista de strings
-      }
-    });
-
-    // mostra caixa de diálogo com as opções selecionadas
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          // título da lista
-
-          title: const Text('Selected Items'),
-
-          // conteúdo da lista
-
-          //* a cada elemento adicina uma vírgula
-
-          content: Text(selected.join(', ')),
-
-          actions: [
-            // cria botão na caixa de diálogo
-
-            TextButton(
-              onPressed: () {
-                //fecha caixa de diálogo
-
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSelectedLocal() {
-    // mostra itens selecionados
-
-    List<String> selected = []; // lista de strings
-
-    // percorre coleção que contém o itens selecionados
-
-    local.forEach((String key, bool value) {
-      if (value) {
-        // se valor válido
-
-        selected.add(key); // adiciona na lista de strings
-      }
-    });
-
-    // mostra caixa de diálogo com as opções selecionadas
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          // título da lista
-
-          title: const Text('Selected Items'),
-
-          // conteúdo da lista
-
-          //* a cada elemento adicina uma vírgula
-
-          content: Text(selected.join(', ')),
-
-          actions: [
-            // cria botão na caixa de diálogo
-
-            TextButton(
-              onPressed: () {
-                //fecha caixa de diálogo
-
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
